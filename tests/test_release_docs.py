@@ -61,7 +61,7 @@ def test_replay_launch_docs_and_assets_are_present() -> None:
     assert "Hermes Teal Default" in release_notes
     assert "Chat Diagnostics" in release_notes
     assert "GitHub Actions CI" in release_notes
-    assert "assets/replay-tab.png" in release_notes
+    assert "assets/replay-tab.png" not in release_notes
 
     assert (ROOT / "assets" / "replay-tab.png").exists()
     example = ROOT / "assets" / "example-replay.redacted.json"
