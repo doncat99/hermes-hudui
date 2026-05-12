@@ -43,11 +43,30 @@ DIR_PATTERNS = {
     "plugins": ["plugins", "health"],
 }
 
+KNOWLEDGE_GOVERNANCE_RUN_FILES = frozenset(
+    {"project_run.json", "review_packet.json", "task_records.json", "kanban_projection.json"}
+)
+KNOWLEDGE_GOVERNANCE_ONTOLOGY_FILES = frozenset(
+    {"project_data_catalog.json", "project_data_view.json"}
+)
+KNOWLEDGE_GOVERNANCE_PROMOTION_FILES = frozenset(
+    {"candidate.json", "review_packet.json", "promotion_decision.json", "promotion_application.json"}
+)
+
 
 def _detect_change_type(path: Path) -> list[str]:
     """Determine what data types changed based on file path."""
     path_str = str(path)
     name = path.name
+
+    if "/artifacts/operator/" in path_str and name == "status.json":
+        return ["knowledge-governance"]
+    if "/artifacts/governance/promotions/" in path_str and name in KNOWLEDGE_GOVERNANCE_PROMOTION_FILES:
+        return ["knowledge-governance"]
+    if "/artifacts/ontology/" in path_str and name in KNOWLEDGE_GOVERNANCE_ONTOLOGY_FILES:
+        return ["knowledge-governance"]
+    if "/artifacts/runs/" in path_str and name in KNOWLEDGE_GOVERNANCE_RUN_FILES:
+        return ["knowledge-governance"]
 
     # Check file patterns
     if name in FILE_PATTERNS:
@@ -161,6 +180,15 @@ class FileWatcherService:
             path = self.hermes_dir / subdir
             if path.exists():
                 paths.append(path)
+
+        repo_root = Path(__file__).resolve().parents[3]
+        artifact_root = repo_root / "artifacts"
+        if artifact_root.exists():
+            paths.append(artifact_root)
+            for subdir in ["operator", "ontology", "runs"]:
+                path = artifact_root / subdir
+                if path.exists():
+                    paths.append(path)
 
         return paths
 

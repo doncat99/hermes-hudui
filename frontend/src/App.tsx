@@ -23,6 +23,7 @@ import ProvidersPanel from './components/ProvidersPanel'
 import GatewayPanel from './components/GatewayPanel'
 import ModelInfoPanel from './components/ModelInfoPanel'
 import PluginsPanel from './components/PluginsPanel'
+import KnowledgeGovernancePanel from './components/KnowledgeGovernancePanel'
 import { useI18n } from './i18n'
 
 function TabContent({ tab }: { tab: TabId }) {
@@ -46,6 +47,7 @@ function TabContent({ tab }: { tab: TabId }) {
     case 'gateway': return <GatewayPanel />
     case 'model-info': return <ModelInfoPanel />
     case 'plugins': return <PluginsPanel />
+    case 'knowledge-governance': return <KnowledgeGovernancePanel />
     default: return <DashboardPanel />
   }
 }
@@ -71,6 +73,7 @@ const GRID_CLASS: Record<TabId, string> = {
   gateway: 'grid-cols-1',
   'model-info': 'grid-cols-1 lg:grid-cols-2',
   plugins: 'grid-cols-1 lg:grid-cols-2',
+  'knowledge-governance': 'grid-cols-1',
 }
 
 export default function App() {
@@ -101,6 +104,7 @@ export default function App() {
     { id: 'replay', label: 'tab.replay', shortcut: '', action: () => setActiveTab('replay') },
     { id: 'plugins', label: 'tab.plugins', shortcut: '', action: () => setActiveTab('plugins') },
     { id: 'sudo', label: 'tab.sudo', shortcut: '', action: () => setActiveTab('sudo') },
+    { id: 'knowledge-governance', label: 'tab.knowledgeGovernance', shortcut: '', action: () => setActiveTab('knowledge-governance') },
   ], [])
 
   const handleCommandSelect = useCallback((id: string) => {

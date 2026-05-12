@@ -101,7 +101,8 @@ export function useWebSocket(): UseWebSocketReturn {
             gateway: '/gateway',
             plugins: '/plugins',
             'model-info': '/model-info',
-          }
+            'knowledge-governance': '/knowledge-governance',
+                    }
 
           const healthTypes = new Set(['health', 'config', 'gateway', 'plugins', 'model-info'])
 

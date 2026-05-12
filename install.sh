@@ -101,8 +101,9 @@ cd ..
 # Copy to static
 echo "→ Deploying frontend..."
 mkdir -p backend/static/assets
-cp frontend/dist/index.html backend/static/
-cp frontend/dist/assets/* backend/static/assets/
+rm -rf backend/static/assets/*
+rm -f backend/static/index.html
+cp -R frontend/dist/* backend/static/
 echo "✔ Frontend built and deployed"
 
 echo ""
