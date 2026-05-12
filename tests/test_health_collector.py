@@ -53,6 +53,47 @@ def _make_state_db(path: Path, include_messages: bool = True) -> None:
     conn.close()
 
 
+def _make_modern_state_db(path: Path) -> None:
+    conn = sqlite3.connect(path)
+    conn.executescript(
+        """
+        CREATE TABLE sessions (
+            id TEXT PRIMARY KEY,
+            source TEXT,
+            started_at REAL,
+            message_count INTEGER DEFAULT 0,
+            tool_call_count INTEGER DEFAULT 0,
+            input_tokens INTEGER DEFAULT 0,
+            output_tokens INTEGER DEFAULT 0,
+            cache_read_tokens INTEGER DEFAULT 0,
+            cache_write_tokens INTEGER DEFAULT 0,
+            reasoning_tokens INTEGER DEFAULT 0,
+            estimated_cost_usd REAL DEFAULT 0,
+            actual_cost_usd REAL DEFAULT 0,
+            model TEXT,
+            billing_provider TEXT,
+            model_config TEXT
+        );
+        CREATE TABLE messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT,
+            role TEXT,
+            content TEXT,
+            tool_call_id TEXT,
+            tool_calls TEXT,
+            tool_name TEXT,
+            timestamp REAL
+        );
+        """
+    )
+    conn.execute(
+        "INSERT INTO sessions (id, source, started_at, message_count, tool_call_count, model, billing_provider) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        ("s1", "cli", time.time() - 60, 2, 1, "claude-sonnet-4-6", "anthropic"),
+    )
+    conn.commit()
+    conn.close()
+
+
 def _by_name(items):
     return {item.name: item for item in items}
 
@@ -137,6 +178,23 @@ def test_health_reports_schema_drift_and_missing_inputs(tmp_path: Path, monkeypa
 
     assert state.hermes_cli_status == "broken"
     assert state.diagnostics_broken >= 1
+
+
+def test_health_accepts_modern_message_embedded_tool_call_schema(tmp_path: Path, monkeypatch) -> None:
+    _make_modern_state_db(tmp_path / "state.db")
+    (tmp_path / "config.yaml").write_text("model:\n  provider: anthropic\n  default: claude-sonnet-4-6\n")
+
+    monkeypatch.setattr("backend.collectors.health._check_pid_file", lambda *args, **kwargs: None)
+    monkeypatch.setattr("backend.collectors.health._check_systemd_service", lambda *args, **kwargs: None)
+    monkeypatch.setattr("backend.collectors.health._check_process", lambda *args, **kwargs: None)
+    monkeypatch.setattr("backend.collectors.health._hermes_cli_info", lambda: ("ok", "/usr/bin/hermes", "hermes 1.2.3"))
+
+    state = collect_health(str(tmp_path))
+
+    database = _by_name(state.database)
+    assert database["tool calls table"].status == "ok"
+    assert "stored in messages" in database["tool calls table"].detail
+    assert not any(item.status == "broken" for item in state.database)
 
 
 def test_health_diagnostics_are_sorted_by_severity(tmp_path: Path, monkeypatch) -> None:

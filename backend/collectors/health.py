@@ -352,8 +352,43 @@ def _schema_diag(
             "database",
             depends_on=["state.db", table],
             suggested_fix="Update Hermes or migrate/restore state.db so HUD can read the expected schema.",
-        )
+    )
     return _diag(name, "ok", f"{table} ready", "database", depends_on=["state.db", table])
+
+
+def _tool_calls_schema_diag(
+    tables: set[str],
+    columns: dict[str, set[str]],
+) -> DiagnosticStatus:
+    if "tool_calls" in tables:
+        return _diag(
+            "tool calls table",
+            "ok",
+            "tool_calls ready",
+            "database",
+            depends_on=["state.db", "tool_calls"],
+        )
+
+    message_columns = columns.get("messages", set())
+    modern_columns = {"tool_calls", "tool_call_id", "tool_name"}
+    if "messages" in tables and modern_columns & message_columns:
+        present = sorted(modern_columns & message_columns)
+        return _diag(
+            "tool calls table",
+            "ok",
+            f"tool calls stored in messages ({', '.join(present)})",
+            "database",
+            depends_on=["state.db", "messages"],
+        )
+
+    return _diag(
+        "tool calls table",
+        "broken",
+        "tool_calls table missing",
+        "database",
+        depends_on=["state.db", "tool_calls"],
+        suggested_fix="Run Hermes once or migrate/restore the state database.",
+    )
 
 
 def _feature_diag(
@@ -465,7 +500,7 @@ def collect_health(hermes_dir: str | None = None) -> HealthState:
     state.database.extend([
         _schema_diag("sessions table", tables, columns, "sessions", session_columns),
         _schema_diag("messages table", tables, columns, "messages", {"session_id", "role", "content"}),
-        _schema_diag("tool calls table", tables, columns, "tool_calls"),
+        _tool_calls_schema_diag(tables, columns),
         _schema_diag("model analytics columns", tables, columns, "sessions", model_columns),
     ])
 
