@@ -42,6 +42,26 @@ The Plugin Hub shows installed dashboard and agent plugins, extension entry poin
 
 Updates in real time via WebSocket. No manual refresh needed.
 
+## OntoSynth Operator Surface
+
+This fork is also the current `3001` operator shell for OntoSynth's
+`Knowledge Governance Console`.
+
+In this mode, the HUD is not a generic status page. It is the governed
+knowledge-flow console for:
+
+- project truth state vs projection state vs runtime state
+- who proposed a governed change
+- who is allowed to approve it
+- who actually approved it
+- whether it was written back to governed knowledge
+- the latest worker result and downstream outputs
+
+For OntoSynth, the intended split is:
+
+- `3001`: operator truth and governance responsibility chain
+- `8787`: Hermes runtime/session/skills inspection
+
 ## Hermes Replay
 
 Hermes Replay turns agent runs into redacted, shareable proof artifacts.
