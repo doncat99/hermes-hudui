@@ -26,6 +26,14 @@ import PluginsPanel from './components/PluginsPanel'
 import KnowledgeGovernancePanel from './components/KnowledgeGovernancePanel'
 import { useI18n } from './i18n'
 
+function initialTabFromLocation(): TabId {
+  if (typeof window === 'undefined') return 'dashboard'
+  const path = window.location.pathname || '/'
+  if (path === '/knowledge-governance') return 'knowledge-governance'
+  if (path.startsWith('/session/')) return 'knowledge-governance'
+  return 'dashboard'
+}
+
 function TabContent({ tab }: { tab: TabId }) {
   switch (tab) {
     case 'dashboard': return <DashboardPanel />
@@ -78,7 +86,7 @@ const GRID_CLASS: Record<TabId, string> = {
 
 export default function App() {
   const { t } = useI18n()
-  const [activeTab, setActiveTab] = useState<TabId>('dashboard')
+  const [activeTab, setActiveTab] = useState<TabId>(() => initialTabFromLocation())
   const [booted, setBooted] = useState(() => {
     return sessionStorage.getItem('hud-booted') === 'true'
   })
@@ -122,6 +130,19 @@ export default function App() {
     window.addEventListener('hud:navigate', handler)
     return () => window.removeEventListener('hud:navigate', handler)
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const path = window.location.pathname || '/'
+    if (path.startsWith('/session/')) {
+      window.history.replaceState(null, '', '/knowledge-governance')
+      setActiveTab('knowledge-governance')
+      return
+    }
+    if (path === '/knowledge-governance' && activeTab !== 'knowledge-governance') {
+      setActiveTab('knowledge-governance')
+    }
+  }, [activeTab])
 
   return (
     <ThemeProvider>

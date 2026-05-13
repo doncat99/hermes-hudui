@@ -30,6 +30,15 @@ FILE_PATTERNS = {
     ".env": ["health", "profiles"],
     "SOUL.md": ["profiles"],
     "models_dev_cache.json": ["model-info", "health"],
+    "candidate.json": ["knowledge-governance"],
+    "promotion_application.json": ["knowledge-governance"],
+    "promotion_decision.json": ["knowledge-governance"],
+    "project_data_catalog.json": ["knowledge-governance"],
+    "project_data_view.json": ["knowledge-governance"],
+    "project_run.json": ["knowledge-governance"],
+    "review_packet.json": ["knowledge-governance"],
+    "task_records.json": ["knowledge-governance"],
+    "status.json": ["knowledge-governance"],
 }
 
 # Directory patterns
@@ -41,6 +50,7 @@ DIR_PATTERNS = {
     "cron": ["cron"],
     "logs": ["health", "gateway", "sudo"],
     "plugins": ["plugins", "health"],
+    "ontology": ["knowledge-governance"],
 }
 
 KNOWLEDGE_GOVERNANCE_RUN_FILES = frozenset(
@@ -71,6 +81,28 @@ def _detect_change_type(path: Path) -> list[str]:
     # Check file patterns
     if name in FILE_PATTERNS:
         return FILE_PATTERNS[name]
+
+    if "/artifacts/operator/" in path_str and name == "status.json":
+        return ["knowledge-governance"]
+    if "/artifacts/governance/promotions/" in path_str and name in {
+        "candidate.json",
+        "review_packet.json",
+        "promotion_decision.json",
+        "promotion_application.json",
+    }:
+        return ["knowledge-governance"]
+    if "/artifacts/ontology/" in path_str and name in {
+        "project_data_catalog.json",
+        "project_data_view.json",
+    }:
+        return ["knowledge-governance"]
+    if "/artifacts/runs/" in path_str and name in {
+        "project_run.json",
+        "review_packet.json",
+        "task_records.json",
+        "kanban_projection.json",
+    }:
+        return ["knowledge-governance"]
 
     # Check directory patterns
     for dir_name, data_types in DIR_PATTERNS.items():

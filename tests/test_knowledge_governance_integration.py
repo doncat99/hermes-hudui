@@ -19,6 +19,21 @@ def test_knowledge_governance_tab_is_registered_in_frontend_shell() -> None:
     assert "{ id: 'knowledge-governance', label: 'tab.knowledgeGovernance'" in app_tsx
     assert "'tab.knowledgeGovernance': 'Knowledge'" in translations
     assert "'tab.knowledgeGovernance': '知识治理'" in translations
+    assert "function initialTabFromLocation(): TabId" in app_tsx
+    assert "if (path.startsWith('/session/')) return 'knowledge-governance'" in app_tsx
+    assert "window.history.replaceState(null, '', '/knowledge-governance')" in app_tsx
+
+
+def test_knowledge_governance_panel_distinguishes_project_projection_and_runtime_state() -> None:
+    panel = (ROOT / "frontend/src/components/KnowledgeGovernancePanel.tsx").read_text()
+    translations = (ROOT / "frontend/src/i18n/translations.ts").read_text()
+
+    assert "const projectState = projectRun.state || operatorStatus.status || '-'" in panel
+    assert "const projectionStatus = runtime.projection_status || kanbanProjection.projection_status || '-'" in panel
+    assert "const runtimeState = runtime.runtime_state || runtime.reconciled_state || '-'" in panel
+    assert "knowledgeGovernance.projectState" in panel
+    assert "'knowledgeGovernance.projectState': 'Project State'" in translations
+    assert "'knowledgeGovernance.projectState': '项目状态'" in translations
 
 
 def test_knowledge_governance_api_route_is_registered() -> None:

@@ -64,24 +64,39 @@ export default function KnowledgeGovernancePanel() {
   const kanban = data?.kanban_overlay || {}
   const statusCounts = kanban.status_counts || {}
   const runtime = data?.knowledge_governance_runtime || {}
+  const latestWorkerMetadata = runtime.latest_worker_metadata || {}
+  const childTasks = Array.isArray(runtime.child_tasks) ? runtime.child_tasks : []
+  const projectState = projectRun.state || operatorStatus.status || '-'
+  const projectionStatus = runtime.projection_status || kanbanProjection.projection_status || '-'
+  const runtimeState = runtime.runtime_state || runtime.reconciled_state || '-'
 
   return (
     <>
       <Panel title={t('knowledgeGovernance.title')} className="col-span-full">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3">
           <MetricCard label={t('knowledgeGovernance.workspace')} value={data?.workspace_root || '-'} tone="var(--hud-text)" />
           <MetricCard label={t('knowledgeGovernance.project')} value={data?.project_key || '-'} />
           <MetricCard label={t('knowledgeGovernance.run')} value={projectRun.run_key || data?.run_key || '-'} />
           <MetricCard
-            label={t('knowledgeGovernance.state')}
-            value={governanceFlow.status || projectRun.state || operatorStatus.status || '-'}
-            tone={projectRun.state === 'under_review' ? 'var(--hud-warning)' : 'var(--hud-success)'}
+            label={t('knowledgeGovernance.projectState')}
+            value={projectState}
+            tone={projectState === 'under_review' ? 'var(--hud-warning)' : projectState === 'ready' || projectState === 'completed' ? 'var(--hud-success)' : 'var(--hud-text)'}
           />
           <MetricCard
-            label={t('knowledgeGovernance.runtimePath')}
-            value={runtime.runtime_path || '-'}
-            tone="var(--hud-text)"
+            label={t('knowledgeGovernance.projectionStatus')}
+            value={projectionStatus}
+            tone={projectionStatus === 'projected' ? 'var(--hud-success)' : 'var(--hud-warning)'}
           />
+          <MetricCard
+            label={t('knowledgeGovernance.runtimeState')}
+            value={runtimeState}
+            tone={runtimeState === 'completed' ? 'var(--hud-success)' : runtimeState === '-' ? 'var(--hud-text-dim)' : 'var(--hud-warning)'}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <MetricCard label={t('knowledgeGovernance.runtimePath')} value={runtime.runtime_path || '-'} tone="var(--hud-text)" />
+          <MetricCard label={t('knowledgeGovernance.followupTaskStatus')} value={runtime.followup_task_status || '-'} tone="var(--hud-text)" />
+          <MetricCard label={t('knowledgeGovernance.followupAssignee')} value={runtime.followup_assignee || '-'} tone="var(--hud-text)" />
         </div>
       </Panel>
 
@@ -90,7 +105,7 @@ export default function KnowledgeGovernancePanel() {
           <MetricCard label={t('knowledgeGovernance.promotions')} value={governanceFlow.promotion_count ?? 0} />
           <MetricCard label={t('knowledgeGovernance.writtenBack')} value={governanceFlow.write_back_count ?? 0} tone="var(--hud-success)" />
           <MetricCard label={t('knowledgeGovernance.pendingWriteBack')} value={governanceFlow.pending_write_back_count ?? 0} tone={(governanceFlow.pending_write_back_count || 0) > 0 ? 'var(--hud-warning)' : 'var(--hud-text-dim)'} />
-          <MetricCard label={t('knowledgeGovernance.governanceStatus')} value={governanceFlow.status || '-'} />
+          <MetricCard label={t('knowledgeGovernance.governanceFlowStatus')} value={governanceFlow.status || '-'} />
           <MetricCard label={t('knowledgeGovernance.currentRunDecision')} value={reviewPacket.recommended_decision || '-'} />
         </div>
         <div className="space-y-2">
@@ -145,7 +160,7 @@ export default function KnowledgeGovernancePanel() {
           <div className="border p-3" style={{ borderColor: 'var(--hud-border)' }}>
             <div className="text-[13px] font-bold mb-2">{t('knowledgeGovernance.runOverlayTitle')}</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-              <MetricCard label={t('knowledgeGovernance.state')} value={projectRun.state || '-'} tone={projectRun.state === 'projected' ? 'var(--hud-success)' : 'var(--hud-warning)'} />
+              <MetricCard label={t('knowledgeGovernance.projectState')} value={projectState} tone={projectState === 'under_review' ? 'var(--hud-warning)' : projectState === 'ready' || projectState === 'completed' ? 'var(--hud-success)' : 'var(--hud-text)'} />
               <MetricCard label={t('knowledgeGovernance.allowedApprovers')} value={(reviewPacket.allowed_approvers || []).join(', ') || '-'} tone="var(--hud-text)" />
             </div>
             <div className="space-y-2">
@@ -170,7 +185,7 @@ export default function KnowledgeGovernancePanel() {
             <div className="text-[13px] font-bold mb-2">{t('knowledgeGovernance.queueOverlayTitle')}</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
               <MetricCard label={t('knowledgeGovernance.tenant')} value={kanban.tenant || '-'} tone="var(--hud-text)" />
-              <MetricCard label={t('knowledgeGovernance.kanbanStatus')} value={kanban.status || '-'} tone={kanban.status === 'ready' ? 'var(--hud-success)' : 'var(--hud-warning)'} />
+              <MetricCard label={t('knowledgeGovernance.projectionStatus')} value={projectionStatus} tone={projectionStatus === 'projected' ? 'var(--hud-success)' : 'var(--hud-warning)'} />
               <MetricCard label={t('knowledgeGovernance.projectionTasks')} value={(kanbanProjection.task_refs || []).length} />
               <MetricCard label={t('knowledgeGovernance.projectedRoleDrift')} value={(skillLoadingContract.projection_drift || []).length} tone={(skillLoadingContract.projection_drift || []).length > 0 ? 'var(--hud-warning)' : 'var(--hud-success)'} />
             </div>
@@ -212,6 +227,69 @@ export default function KnowledgeGovernancePanel() {
               {(!kanban.tasks || kanban.tasks.length === 0) && (
                 <div className="text-[13px]" style={{ color: 'var(--hud-text-dim)' }}>
                   {t('knowledgeGovernance.noKanban')}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="border p-3" style={{ borderColor: 'var(--hud-border)' }}>
+          <div className="text-[13px] font-bold mb-2">{t('knowledgeGovernance.latestWorkerResultTitle')}</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+            <MetricCard label={t('knowledgeGovernance.runtimeState')} value={runtimeState} tone={runtimeState === 'completed' ? 'var(--hud-success)' : runtimeState === '-' ? 'var(--hud-text-dim)' : 'var(--hud-warning)'} />
+            <MetricCard label={t('knowledgeGovernance.activeRunStatus')} value={runtime.active_run_status || '-'} tone="var(--hud-text)" />
+            <MetricCard label={t('knowledgeGovernance.activeRunOutcome')} value={runtime.active_run_outcome || '-'} tone="var(--hud-text)" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="border p-2" style={{ borderColor: 'var(--hud-border)' }}>
+              <div className="text-[11px] uppercase tracking-widest mb-1" style={{ color: 'var(--hud-text-dim)' }}>
+                {t('knowledgeGovernance.latestWorkerSummary')}
+              </div>
+              <div className="text-[13px] whitespace-pre-wrap break-words" style={{ color: 'var(--hud-text)' }}>
+                {runtime.latest_worker_summary || '-'}
+              </div>
+            </div>
+            <div className="border p-2" style={{ borderColor: 'var(--hud-border)' }}>
+              <div className="text-[11px] uppercase tracking-widest mb-1" style={{ color: 'var(--hud-text-dim)' }}>
+                {t('knowledgeGovernance.latestWorkerMetadata')}
+              </div>
+              <div className="text-[11px] whitespace-pre-wrap break-words" style={{ color: 'var(--hud-text-dim)' }}>
+                {Object.keys(latestWorkerMetadata).length ? JSON.stringify(latestWorkerMetadata, null, 2) : '-'}
+              </div>
+            </div>
+          </div>
+          {runtime.latest_worker_error ? (
+            <div className="border p-2 mt-3" style={{ borderColor: 'var(--hud-warning)' }}>
+              <div className="text-[11px] uppercase tracking-widest mb-1" style={{ color: 'var(--hud-warning)' }}>
+                {t('knowledgeGovernance.latestWorkerError')}
+              </div>
+              <div className="text-[11px] whitespace-pre-wrap break-words" style={{ color: 'var(--hud-warning)' }}>
+                {runtime.latest_worker_error}
+              </div>
+            </div>
+          ) : null}
+          <div className="border p-2 mt-3" style={{ borderColor: 'var(--hud-border)' }}>
+            <div className="text-[11px] uppercase tracking-widest mb-1" style={{ color: 'var(--hud-text-dim)' }}>
+              {t('knowledgeGovernance.downstreamOutputs')}
+            </div>
+            <div className="space-y-2">
+              {childTasks.map((task: any) => (
+                <div key={task.task_id} className="border p-2" style={{ borderColor: 'var(--hud-border)' }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[12px] font-bold break-words" style={{ color: 'var(--hud-primary)' }}>
+                      {task.runtime_identity || task.task_id}
+                    </div>
+                    <div className="text-[11px] shrink-0" style={{ color: 'var(--hud-text-dim)' }}>
+                      {task.task_status || '-'} / {task.run_outcome || '-'}
+                    </div>
+                  </div>
+                  <div className="text-[11px] mt-1 whitespace-pre-wrap break-words" style={{ color: 'var(--hud-text)' }}>
+                    {task.summary || '-'}
+                  </div>
+                </div>
+              ))}
+              {childTasks.length === 0 && (
+                <div className="text-[13px]" style={{ color: 'var(--hud-text-dim)' }}>
+                  -
                 </div>
               )}
             </div>
